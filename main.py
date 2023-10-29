@@ -16,6 +16,7 @@ class EditServerPropertiesDialog(QDialog):
     def initUI(self):
         self.setWindowTitle("Edit server.properties")
         self.setGeometry(400, 400, 500, 500)
+        self.setWindowIcon(QIcon("server.ico"))
 
         layout = QVBoxLayout()
 
@@ -67,7 +68,7 @@ class MinecraftServerHelperGUI(QMainWindow):
         self.setGeometry(300, 300, 800, 800)  # Centered on the screen
 
         # Set the application icon
-        self.setWindowIcon(QIcon("icon.ico"))
+        self.setWindowIcon(QIcon("server.ico"))
 
         layout = QVBoxLayout()
 
@@ -77,9 +78,8 @@ class MinecraftServerHelperGUI(QMainWindow):
         # Use QTextEdit for IP and port, set as read-only
         self.ip_textedit = QTextEdit()
         self.ip_textedit.setPlainText(f"Server IP: {public_ip}\nServer Port: 25526")
-        self.ip_textedit.setAlignment(Qt.AlignCenter)
+        self.ip_textedit.setAlignment(Qt.AlignCenter) # type: ignore
         self.ip_textedit.setReadOnly(True)
-        self.ip_textedit.viewport().setAutoFillBackground(False)
         self.ip_textedit.setStyleSheet("background-color: black; color: white;")
 
         # Set the text size to be larger
