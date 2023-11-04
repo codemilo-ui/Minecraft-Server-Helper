@@ -1,11 +1,13 @@
 import sys
 import requests
+import os
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QDialog, QComboBox
 from PyQt5.QtGui import QPalette, QColor, QTextCursor, QTextCharFormat, QFont, QIcon
 
 import subprocess
 import psutil
+
 
 class EditServerPropertiesDialog(QDialog):
     def __init__(self, server_properties_content):
@@ -22,7 +24,8 @@ class EditServerPropertiesDialog(QDialog):
 
         # Create a QTextEdit widget for editing server.properties
         self.server_properties_edit = QTextEdit()
-        self.server_properties_edit.setPlainText(self.server_properties_content)
+        self.server_properties_edit.setPlainText(
+            self.server_properties_content)
         self.server_properties_edit.setAutoFillBackground(False)
 
         # Create a Save button for server.properties editing
@@ -52,6 +55,7 @@ class EditServerPropertiesDialog(QDialog):
         msg.setWindowTitle("Error")
         msg.exec_()
 
+
 class MinecraftServerHelperGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -77,21 +81,12 @@ class MinecraftServerHelperGUI(QMainWindow):
 
         # Use QTextEdit for IP and port, set as read-only
         self.ip_textedit = QTextEdit()
-        self.ip_textedit.setPlainText(f"Server IP: {public_ip}\nServer Port: 25526")
-        self.ip_textedit.setAlignment(Qt.AlignCenter) # type: ignore
+        self.ip_textedit.setPlainText(
+            f"Server IP: {public_ip}\nServer Port: 25526")
+        self.ip_textedit.setAlignment(Qt.AlignCenter)  # type: ignore
         self.ip_textedit.setReadOnly(True)
-        self.ip_textedit.setStyleSheet("background-color: black; color: white;")
-
-        # Set the text size to be larger
-        text_format = QTextCharFormat()
-        text_format.setFontPointSize(16)
-        text_format.setForeground(QColor(255, 255, 255))
-        cursor = self.ip_textedit.textCursor()
-        cursor.setPosition(0)
-        cursor.select(QTextCursor.Document)
-        cursor.mergeCharFormat(text_format)
-        cursor.clearSelection()
-
+        self.ip_textedit.setStyleSheet(
+            "background-color: black; color: white;")
         self.start_button = QPushButton("Start Server")
         self.start_button.setStyleSheet("background-color: green;")
         self.start_button.clicked.connect(self.start_server)
@@ -107,10 +102,84 @@ class MinecraftServerHelperGUI(QMainWindow):
         layout.addWidget(self.start_button)
         layout.addWidget(self.stop_button)
         layout.addWidget(self.edit_button)
+        # Set the text size to be larger
+        text_format = QTextCharFormat()
+        text_format.setFontPointSize(16)
+        text_format.setForeground(QColor(255, 255, 255))
+        cursor = self.ip_textedit.textCursor()
+        cursor.setPosition(0)
+        cursor.select(QTextCursor.Document)
+        cursor.mergeCharFormat(text_format)
+        cursor.clearSelection()
+
+        # Create a container for the dropdown and install button
+        dropdown_container = QWidget()
+        dropdown_layout = QVBoxLayout()
+
+        # Create a dropdown menu for selecting Minecraft versions
+        self.version_combo = QComboBox()
+        versions = ["1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16"]
+        self.version_combo.addItems(versions)
+        self.version_combo.setStyleSheet(
+            "font-size: 12px;")  # Make the text smaller
+        dropdown_layout.addWidget(self.version_combo)
+
+        # Create an "Install" button
+        self.install_button = QPushButton("Install")
+        self.install_button.setStyleSheet("background-color: green;")
+        self.install_button.clicked.connect(self.install_minecraft_version)
+        dropdown_layout.addWidget(self.install_button)
+
+        dropdown_container.setLayout(dropdown_layout)
+
+        layout.addWidget(self.ip_textedit)
+        layout.addStretch(1)  # Add space to center-align the dropdown
+        layout.addWidget(dropdown_container)
+        layout.addStretch(1)  # Add more space to center-align the buttons
+
+        # Set a maximum width for the dropdown
+        self.version_combo.setMaximumWidth(150)
+        # Set a maximum width for the button
+        self.install_button.setMaximumWidth(100)
 
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
+
+    def install_minecraft_version(self):
+        selected_version = self.version_combo.currentText()
+        # Replace with the actual download URL
+        download_url = f"https://example.com/minecraft/{selected_version}.jar"
+
+        # Set the download directory (you can change this to your preferred directory)
+        download_dir = os.path.expanduser("~/Downloads")
+
+        # Create the download directory if it doesn't exist
+        if not os.path.exists(download_dir):
+            os.makedirs(download_dir)
+
+        # Construct the file path for the downloaded Minecraft version
+        file_name = f"minecraft_{selected_version}.jar"
+        file_path = os.path.join(download_dir, file_name)
+
+        # Download the selected Minecraft version
+        try:
+            response = requests.get(download_url)
+            with open(file_path, "wb") as file:
+                file.write(response.content)
+            self.show_info_popup(
+                f"Minecraft {selected_version} downloaded successfully to {file_path}")
+        except requests.RequestException as e:
+            self.show_error_popup(
+                f"Error downloading Minecraft {selected_version}: {str(e)}")
+
+    def show_info_popup(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Information")
+        msg.setInformativeText(message)
+        msg.setWindowTitle("Information")
+        msg.exec_()
 
     def get_public_ip(self):
         try:
@@ -124,13 +193,15 @@ class MinecraftServerHelperGUI(QMainWindow):
         try:
             subprocess.Popen(["start", "mcstart.bat"], shell=True)
         except FileNotFoundError:
-            self.show_error_popup("mcstart.bat not found. Please provide the correct path to the Minecraft server start batch file.")
+            self.show_error_popup(
+                "mcstart.bat not found. Please provide the correct path to the Minecraft server start batch file.")
 
     def stop_server(self):
         try:
             subprocess.run(["taskkill", "/f", "/im", "java.exe"])
         except FileNotFoundError:
-            self.show_error_popup("taskkill command not found. Ensure you are using Windows.")
+            self.show_error_popup(
+                "taskkill command not found. Ensure you are using Windows.")
         except subprocess.CalledProcessError:
             self.show_error_popup("Failed to stop the server.")
         else:
@@ -142,7 +213,8 @@ class MinecraftServerHelperGUI(QMainWindow):
             with open("server.properties", "r") as file:
                 server_properties_content = file.read()
         except FileNotFoundError:
-            self.show_error_popup("server.properties file not found. Please provide the correct path.")
+            self.show_error_popup(
+                "server.properties file not found. Please provide the correct path.")
             return
 
         # Open the server.properties editing dialog
@@ -157,11 +229,13 @@ class MinecraftServerHelperGUI(QMainWindow):
         msg.setWindowTitle("Error")
         msg.exec_()
 
+
 def main():
     app = QApplication(sys.argv)
     window = MinecraftServerHelperGUI()
     window.show()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
