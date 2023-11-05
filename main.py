@@ -117,8 +117,8 @@ class MinecraftServerHelperGUI(QMainWindow):
 
         # Create a dropdown menu for selecting Minecraft versions
         self.version_combo = QComboBox()
-        versions = ["1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.18.1",
-                    "1.18.2", "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16"]
+        versions = ["1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.18.2",
+                    "1.18.1", "1.16.5"]
         self.version_combo.addItems(versions)
         self.version_combo.setStyleSheet("""
             font-size: 12px;
@@ -156,7 +156,7 @@ class MinecraftServerHelperGUI(QMainWindow):
     def install_minecraft_version(self):
         selected_version = self.version_combo.currentText()
         # Replace with the actual download URL
-        download_url = f"https://watchdog-bot.tk/minecraft/{selected_version}.jar"
+        download_url = f"https://watchdog-bot.tk/paper-{selected_version}.jar"
 
         # Set the download directory to the current directory and a folder called "version"
         download_dir = os.path.join(os.getcwd(), "version")
@@ -166,7 +166,7 @@ class MinecraftServerHelperGUI(QMainWindow):
             os.makedirs(download_dir)
 
         # Construct the file path for the downloaded Minecraft version
-        file_name = f"minecraft_{selected_version}.jar"
+        file_name = f"mcsrvr_{selected_version}.jar"
         file_path = os.path.join(download_dir, file_name)
 
         # Download the selected Minecraft version
