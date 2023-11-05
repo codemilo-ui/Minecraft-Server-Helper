@@ -17,7 +17,7 @@ class EditServerPropertiesDialog(QDialog):
 
     def initUI(self):
         self.setWindowTitle("Edit server.properties")
-        self.setGeometry(400, 400, 500, 500)
+        self.setGeometry(400, 400, 300, 300)
         self.setWindowIcon(QIcon("server.ico"))
 
         layout = QVBoxLayout()
@@ -69,8 +69,7 @@ class MinecraftServerHelperGUI(QMainWindow):
         self.setPalette(dark_palette)
 
         self.setWindowTitle("Minecraft Server Helper")
-        self.setGeometry(300, 300, 800, 800)  # Centered on the screen
-
+        self.setGeometry(300, 300, 400, 300)  # Adjust the window size
         # Set the application icon
         self.setWindowIcon(QIcon("server.ico"))
 
@@ -118,10 +117,18 @@ class MinecraftServerHelperGUI(QMainWindow):
 
         # Create a dropdown menu for selecting Minecraft versions
         self.version_combo = QComboBox()
-        versions = ["1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16"]
+        versions = ["1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.18.1",
+                    "1.18.2", "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16"]
         self.version_combo.addItems(versions)
-        self.version_combo.setStyleSheet(
-            "font-size: 12px;")  # Make the text smaller
+        self.version_combo.setStyleSheet("""
+            font-size: 12px;
+            background-color: black;
+            color: white;
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 3px;
+            selection-background-color: #4CAF50;
+        """)
         dropdown_layout.addWidget(self.version_combo)
 
         # Create an "Install" button
@@ -149,10 +156,10 @@ class MinecraftServerHelperGUI(QMainWindow):
     def install_minecraft_version(self):
         selected_version = self.version_combo.currentText()
         # Replace with the actual download URL
-        download_url = f"https://example.com/minecraft/{selected_version}.jar"
+        download_url = f"https://watchdog-bot.tk/minecraft/{selected_version}.jar"
 
-        # Set the download directory (you can change this to your preferred directory)
-        download_dir = os.path.expanduser("~/Downloads")
+        # Set the download directory to the current directory and a folder called "version"
+        download_dir = os.path.join(os.getcwd(), "version")
 
         # Create the download directory if it doesn't exist
         if not os.path.exists(download_dir):
