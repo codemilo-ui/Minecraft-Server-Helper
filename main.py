@@ -1,12 +1,10 @@
 import sys
 import requests
-import os
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QDialog, QComboBox
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QDialog, QComboBox, QProgressDialog
 from PyQt5.QtGui import QPalette, QColor, QTextCursor, QTextCharFormat, QFont, QIcon
-
 import subprocess
-import psutil
+import os
 
 
 class EditServerPropertiesDialog(QDialog):
@@ -55,6 +53,23 @@ class EditServerPropertiesDialog(QDialog):
         msg.setWindowTitle("Error")
         msg.exec_()
 
+class DownloadThread(QThread):
+    downloadFinished = pyqtSignal()
+
+    def __init__(self, download_url, file_path, parent=None):
+        super().__init__(parent)
+        self.download_url = download_url
+        self.file_path = file_path
+        self.error_message = None
+
+    def run(self):
+        try:
+            response = requests.get(self.download_url)
+            with open(self.file_path, "wb") as file:
+                file.write(response.content)
+        except requests.RequestException as e:
+            self.error_message = str(e)
+        self.downloadFinished.emit()
 
 class MinecraftServerHelperGUI(QMainWindow):
     def __init__(self):
@@ -133,7 +148,12 @@ class MinecraftServerHelperGUI(QMainWindow):
 
         # Create an "Install" button
         self.install_button = QPushButton("Install")
-        self.install_button.setStyleSheet("background-color: green;")
+        self.install_button.setStyleSheet("""
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+        """)
         self.install_button.clicked.connect(self.install_minecraft_version)
         dropdown_layout.addWidget(self.install_button)
 
@@ -169,17 +189,26 @@ class MinecraftServerHelperGUI(QMainWindow):
         file_name = f"mcsrvr_{selected_version}.jar"
         file_path = os.path.join(download_dir, file_name)
 
-        # Download the selected Minecraft version
-        try:
-            response = requests.get(download_url)
-            with open(file_path, "wb") as file:
-                file.write(response.content)
+        # Create a loading screen
+        progressDialog = QProgressDialog("Downloading...", None, 0, 0)
+        progressDialog.setCancelButton(None)
+        progressDialog.setWindowModality(Qt.ApplicationModal) # type: ignore
+
+        # Download the selected Minecraft version in a separate thread
+        download_thread = DownloadThread(download_url, file_path)
+        download_thread.downloadFinished.connect(progressDialog.close) # type: ignore
+        download_thread.start()
+
+        progressDialog.exec_()  # Display the loading screen
+
+        # Check for download errors
+        if download_thread.error_message:
+            self.show_error_popup(
+                f"Error downloading Minecraft {selected_version}: {download_thread.error_message}")
+        else:
             self.show_info_popup(
                 f"Minecraft {selected_version} downloaded successfully to {file_path}")
-        except requests.RequestException as e:
-            self.show_error_popup(
-                f"Error downloading Minecraft {selected_version}: {str(e)}")
-
+            
     def show_info_popup(self, message):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
